@@ -1229,6 +1229,36 @@
 
   [DROPGUARDS was added in Tor 0.2.5.2-alpha.]
 
+3.26. HSPOST
+
+  The syntax is:
+    "+HSPOST" *[SP "SERVER=" Server] CRLF Descriptor CRLF "." CRLF
+
+    Server = Fingerprint
+
+  This command launches a hidden service descriptor upload to the given OR.
+  If no Server is specified, it behaves like a normal HS descriptor upload
+  and will upload to the set of responsible HS directories. If one or more
+  Server are given, they are used instead, triggering a upload on each of
+  them in parallel.
+
+  If any value is unrecognized, a 552 error is returned and the command is
+  stopped. The HS descriptor, when parsed, must contain a number of
+  well-specified fields, including fields for its public key and descriptor
+  ID as specified in the rend-spec. If there is an error in parsing the
+  descriptor, the server must send a "554 Invalid descriptor" reply.
+
+  On success, Tor replies "250 OK" then Tor MUST eventually follow
+  this with a HS_DESC event with the result for each upload location.
+
+  Examples are:
+     C: +HSPOST SERVER=9695DFC35FFEB861329B9F1AB04C46397020CE31
+        [DESCRIPTOR]
+        .
+     S: 250 OK
+
+  [HSPOST was added in Tor 0.2.7.1-alpha]
+
 4. Replies
 
   Reply codes follow the same 3-character format as used by SMTP, with the
@@ -2538,7 +2568,7 @@
     For HsDir, LongName is always prefered. If HsDir cannot be found in node
     list at the time event is sent, Fingerprint will be used instead.
 
-    If Action is "FAILED", Tor SHOULD send Reason field as well. Possible 
+    If Action is "FAILED", Tor SHOULD send Reason field as well. Possible
     values of Reason are:
        - "BAD_DESC" - descriptor was retrieved, but found to be unparsable.
        - "QUERY_REJECTED" - query was rejected by HS directory.
