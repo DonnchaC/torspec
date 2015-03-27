@@ -1236,17 +1236,16 @@
 
     Server = Fingerprint
 
-  This command launches a hidden service descriptor upload to the given OR.
-  If no Server is specified, it behaves like a normal HS descriptor upload
-  and will upload to the set of responsible HS directories. If one or more
-  Server are given, they are used instead, triggering a upload on each of
-  them in parallel.
+  This command launches a hidden service descriptor upload to the specified
+  HSDirs. If one or more Server arguments are provide, an upload is triggered
+  on each of them in parallel. If no Server options are provided, it behaves
+  like a normal HS descriptor upload and will upload to the set of responsible
+  HS directories.
 
   If any value is unrecognized, a 552 error is returned and the command is
-  stopped. The HS descriptor, when parsed, must contain a number of
-  well-specified fields, including fields for its public key and descriptor
-  ID as specified in the rend-spec. If there is an error in parsing the
-  descriptor, the server must send a "554 Invalid descriptor" reply.
+  stopped. The descriptor MUST be a valid hidden descriptor as specified in
+  the rend-spec. If there is an error in parsing the descriptor, the server
+  must send a "554 Invalid descriptor" reply.
 
   On success, Tor replies "250 OK" then Tor MUST eventually follow
   this with a HS_DESC event with the result for each upload location.
@@ -2549,18 +2548,20 @@
 
   The syntax is:
 
-    "650" SP "HS_DESC" SP Action SP HSAddress SP AuthType SP HsDir [SP DescriptorID]
-    [SP "REASON=" Reason]
+    "650" SP "HS_DESC" SP Action [SP HSAddress] [SP AuthType] SP HsDir
+             [SP DescriptorID] [SP "REASON=" Reason]
 
-    Action =  "REQUESTED" / "RECEIVED" / "IGNORE" / "FAILED"
+    Action =  "REQUESTED" / "UPLOAD" / "RECEIVED" / "UPLOADED" / "IGNORE" /
+              "FAILED"
     HSAddress = 16*Base32Character
     AuthType = "NO_AUTH" / "BASIC_AUTH" / "STEALTH_AUTH" / "UNKNOWN"
     HsDir = LongName / Fingerprint
     DescriptorID = 32*Base32Character
-    Reason = "BAD_DESC" / "QUERY_REJECTED" / "NOT_FOUND" / "UNEXPECTED"
+    Reason = "BAD_DESC" / "QUERY_REJECTED" / "UPLOAD_REJECTED" / "NOT_FOUND" /
+             "UNEXPECTED"
 
     These events will be triggerred when required HiddenService descriptor is
-    not found in the cache and a fetch from network is performed.
+    not found in the cache and a fetch or upload with the network is performed.
 
     If we already had the v0 descriptor, the newly fected v2 descriptor will be
     ignored and a "HS_DESC" event with "IGNORE" action will be generated.
@@ -2572,6 +2573,7 @@
     values of Reason are:
        - "BAD_DESC" - descriptor was retrieved, but found to be unparsable.
        - "QUERY_REJECTED" - query was rejected by HS directory.
+       - "UPLOAD_REJECTED" - descriptor was rejected by HS directory.
        - "NOT_FOUND" - HS descriptor with given identifier was not found.
        - "UNEXPECTED" - nature of failure is unknown.
 
